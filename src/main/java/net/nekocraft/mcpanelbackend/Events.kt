@@ -47,11 +47,11 @@ open class AsyncWebChatEvent(val player: OfflinePlayer, var message: String): Ev
     override fun setCancelled(c: Boolean) { cancelled = c }
     override fun isCancelled() = cancelled
     @Suppress("RecursivePropertyAccessor")
-    override fun getHandlers(): HandlerList = handlers
+    override fun getHandlers(): HandlerList = handler
 
     companion object {
-        private val handlers = HandlerList()
+        private val handler = HandlerList()
         @Suppress("Unused")
-        @JvmStatic fun getHandlerList() = handlers
+        @JvmStatic fun getHandlerList() = handler
     }
 }

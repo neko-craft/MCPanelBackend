@@ -13,6 +13,7 @@ import net.md_5.bungee.api.chat.ClickEvent
 import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
@@ -107,11 +108,10 @@ suspend fun ctrl(type: String, d: String, client: WebSocketSession): String? {
             val token = Json.parse<QuitData>(d).token
             val id = UUID.fromString(token)
             return transaction {
-                val d = Devices.select {
-                    Devices.id.eq(id)
-                    Devices.user.eq(user.uniqueId)
+                val result = Devices.select {
+                    Devices.id.eq(id) and Devices.user.eq(user.uniqueId)
                 }.singleOrNull()
-                Json.stringify(if (d == null) QuitRet("设备ID错误!") else {
+                Json.stringify(if (result == null) QuitRet("设备ID错误!") else {
                     if (Devices.deleteWhere { Devices.id.eq(id) } == 1) QuitRet(null, token)
                     else QuitRet("Token错误")
                 })
