@@ -38,9 +38,10 @@ private val errorMsg = Frame.Text(Json.stringify(Dialog("发生错误!")))
 class Main: JavaPlugin() {
     private lateinit var app: ApplicationEngine
     override fun onEnable() {
+        saveDefaultConfig()
         Database.connect("jdbc:h2:${File(dataFolder, "db").absolutePath}", driver = "org.h2.Driver")
         transaction { SchemaUtils.create(Users, Devices) }
-        app = embeddedServer(Netty, 8124) {
+        app = embeddedServer(Netty, config.getInt("port", 18124)) {
             install(WebSockets)
             routing {
                 webSocket("/ws") {
