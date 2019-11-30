@@ -71,8 +71,9 @@ class Main: JavaPlugin() {
         cmd.setExecutor(cmdExec)
         cmd.tabCompleter = cmdExec
         server.pluginManager.registerEvents(Events(), this)
-        server.scheduler.runTaskTimer(this, ::task, 0, 5 * 20)
-        server.scheduler.runTaskTimer(this, fun () {
+        server.scheduler.runTaskTimerAsynchronously(this, ::task, 0, 5 * 20)
+        server.scheduler.runTaskTimerAsynchronously(this, fun () {
+            if (members.size == 0) return
             listData = Json.stringify(
                     ListRet(
                             Bukkit.getBanList(org.bukkit.BanList.Type.NAME).banEntries.map {

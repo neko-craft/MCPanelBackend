@@ -11,6 +11,7 @@ import org.bukkit.Material
 
 @ImplicitReflectionSerializer
 fun task() {
+    if (members.size == 0) return
     val data = Frame.Text(Json.stringify(StatusData(
             Bukkit.getOnlinePlayers().map {
                 PlayerStatus(it.name, it.health, it.foodLevel,
