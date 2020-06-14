@@ -118,6 +118,9 @@ suspend fun ctrl(type: String, d: String, client: WebSocketSession): String? {
             }
 
         }
+        "heartBeat" -> {
+            return """{"type":"heartBeat"}"""
+        }
     }
     return null
 }

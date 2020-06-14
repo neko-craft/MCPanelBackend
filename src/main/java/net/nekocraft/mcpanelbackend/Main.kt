@@ -10,6 +10,8 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.json.Json
@@ -56,11 +58,14 @@ class Main: JavaPlugin() {
                                 outgoing.send(errorMsg)
                             }
                         }
+                    } catch (ignored: ClosedReceiveChannelException) {
+                    } catch (ignored: ClosedSendChannelException) {
                     } catch (e: Exception) {
                         e.printStackTrace()
                     } finally {
                         members.remove(this)
                         loginedMembers.remove(this)
+                        try { close() } catch (ignored: Exception) { }
                     }
                 }
             }
@@ -74,9 +79,11 @@ class Main: JavaPlugin() {
         server.scheduler.runTaskTimerAsynchronously(this, ::task, 0, 5 * 20)
         server.scheduler.runTaskTimerAsynchronously(this, fun () {
             if (members.size == 0) return
+            val set = HashSet<String>()
             listData = Json.stringify(
                     ListRet(
                             Bukkit.getBanList(org.bukkit.BanList.Type.NAME).banEntries.map {
+                                set.add(it.target)
                                 BanList(it.target, it.reason, it.created.time,
                                         it.expiration?.time, it.source)
                             },
@@ -86,8 +93,8 @@ class Main: JavaPlugin() {
                                         name,
                                         it.firstPlayed,
                                         it.lastSeen,
-                                        it.isBanned,
-                                        it.isWhitelisted,
+                                        set.contains(name),
+                                        false,
                                         it.isOp
                                 )
                             }
