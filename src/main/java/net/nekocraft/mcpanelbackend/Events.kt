@@ -4,6 +4,7 @@ import io.ktor.http.cio.websocket.Frame
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.stringify
 import org.bukkit.Bukkit
@@ -13,8 +14,8 @@ import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 
-
 @ImplicitReflectionSerializer
+@OptIn(UnstableDefault::class)
 class Events: Listener {
     @EventHandler
     fun onChat(e: AsyncPlayerChatEvent) {

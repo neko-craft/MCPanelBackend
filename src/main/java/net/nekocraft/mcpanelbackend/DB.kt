@@ -1,22 +1,41 @@
 package net.nekocraft.mcpanelbackend
 
-import org.jetbrains.exposed.dao.EntityID
-import org.jetbrains.exposed.dao.UUIDEntity
-import org.jetbrains.exposed.dao.UUIDEntityClass
-import org.jetbrains.exposed.dao.UUIDTable
-import org.jetbrains.exposed.sql.select
+import cn.apisium.nekoessentials.utils.Serializer
+import kotlinx.serialization.*
+import kotlinx.serialization.json.Json
+import org.iq80.leveldb.DB
 import java.util.*
+import kotlin.collections.ArrayList
 
-object Users: UUIDTable()
+@Serializable
+internal data class Device(
+        val id: String,
+        val name: String
+)
+@Serializable
+internal data class User(
+        val devices: ArrayList<Device> = ArrayList()
+)
 
-object Devices: UUIDTable() {
-    val user = reference("user", Users)
-    val name = varchar("name", 16)
+@ImplicitReflectionSerializer
+@OptIn(UnstableDefault::class)
+internal fun DB.getPlayer(id: String): User {
+    val bytes = this[("$id.mcPanel").toByteArray()]
+    return if (bytes == null) User() else Json.parse(bytes.toString())
 }
 
-class UsersDao(id: EntityID<UUID>) : UUIDEntity(id) {
-    companion object : UUIDEntityClass<UsersDao>(Users)
+@ImplicitReflectionSerializer
+@OptIn(UnstableDefault::class)
+internal fun DB.savePlayer(id: String, user: User) {
+    this.put(("$id.mcPanel").toByteArray(), Json.stringify(user).toByteArray())
+}
 
-    val devices
-    get() = Devices.select { Devices.user.eq(id) }
+private val DEVICE_MAP = ("mcPanelDevices").toByteArray()
+internal fun DB.getDeviceMap(): HashMap<String, String> {
+    val bytes = this[DEVICE_MAP]
+    return if (bytes == null) HashMap() else Serializer.deserializeObject(bytes) as HashMap<String, String>
+}
+
+internal fun DB.saveDeviceMap(map: HashMap<String, String>) {
+    this.put(DEVICE_MAP, Serializer.serializeObject(map))
 }

@@ -2,9 +2,11 @@ package net.nekocraft.mcpanelbackend
 
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.WebSocketSession
+import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.parse
 import kotlinx.serialization.stringify
@@ -13,27 +15,23 @@ import net.md_5.bungee.api.chat.ClickEvent
 import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
 internal val loginRequests = WeakHashMap<Player, (Boolean) -> Unit>()
 
+@ObsoleteCoroutinesApi
+@OptIn(UnstableDefault::class)
 @Suppress("BlockingMethodInNonBlockingContext")
 @ImplicitReflectionSerializer
-suspend fun ctrl(type: String, d: String, client: WebSocketSession): String? {
+suspend fun ctrl(type: String, d: String, client: WebSocketSession, main: Main): String? {
+    val db = main.instance.db
     when (type) {
         "login" -> {
             val data = Json.parse<LoginData>(d)
             val player = Bukkit.getPlayer(data.userName) ?: return Json.stringify(LoginRet("你没有进入游戏中!"))
-            var user: UsersDao
-            if (transaction {
-                user = UsersDao.findById(player.uniqueId) ?: UsersDao.new(player.uniqueId) { }
-                user.devices.count() > 2
-            }) return Json.stringify(LoginRet("设备数量超过3个, 请进入游戏中输入 /panel devices 来删除!"))
+            val uuid = player.uniqueId.toString()
+            if (db.getPlayer(uuid).devices.size > 2)
+                return Json.stringify(LoginRet("设备数量超过3个, 请进入游戏中输入 /panel devices 来删除!"))
             player.sendMessage("§b§m                    §r §e[用户中心] §b§m                    ")
             player.sendMessage("  §d收到新的登陆设备请求 §7(${data.name}):")
             player.sendMessage(
@@ -58,13 +56,13 @@ suspend fun ctrl(type: String, d: String, client: WebSocketSession): String? {
                                 client.outgoing.send(Frame.Text(Json.stringify(LoginRet("设备名过长!"))))
                                 return@launch
                             }
-                            var token: String
-                            transaction {
-                                token = (Devices.insert { t ->
-                                    t[this.user] = user.id
-                                    t[name] = data.name
-                                } get Devices.id).toString()
-                            }
+                            val user = db.getPlayer(uuid)
+                            val token = UUID.randomUUID().toString()
+                            user.devices.add(Device(token, data.name))
+                            db.savePlayer(uuid, user)
+                            val map = db.getDeviceMap()
+                            map[token] = uuid
+                            db.saveDeviceMap(map)
                             client.outgoing.send(Frame.Text(Json.stringify(LoginRet(token = token))))
                         }
                     }
@@ -81,13 +79,13 @@ suspend fun ctrl(type: String, d: String, client: WebSocketSession): String? {
         "token" -> {
             val data = Json.parse<TokenData>(d)
             val token = try {
-                UUID.fromString(data.token)
+                UUID.fromString(data.token).toString()
             } catch (e: Exception) {
                 return Json.stringify(TokenRet("UUID 错误!"))
             }
-            val device = transaction { Devices.select { Devices.id.eq(token) }.singleOrNull() }
-                    ?: return Json.stringify(TokenRet("UUID 已过期!"))
-            val player = Bukkit.getOfflinePlayer(device[Devices.user].value)
+            val id = db.getDeviceMap()[token] ?: return Json.stringify(TokenRet("UUID 已过期!"))
+            db.getPlayer(id).devices.find { it.id == token } ?: return Json.stringify(TokenRet("UUID 已过期!"))
+            val player = Bukkit.getOfflinePlayer(UUID.fromString(id))
             loginedMembers[client] = player
             return Json.stringify(TokenRet(null, player.name, player.isBanned,
                     player.isWhitelisted, Bukkit.hasWhitelist()))
@@ -104,19 +102,15 @@ suspend fun ctrl(type: String, d: String, client: WebSocketSession): String? {
         }
         "list" -> return listData
         "quit" -> {
-            val user = loginedMembers[client] ?: return Json.stringify(QuitRet("你还没有登录!"))
+            val player = loginedMembers[client] ?: return Json.stringify(QuitRet("你还没有登录!"))
             val token = Json.parse<QuitData>(d).token
-            val id = UUID.fromString(token)
-            return transaction {
-                val result = Devices.select {
-                    Devices.id.eq(id) and Devices.user.eq(user.uniqueId)
-                }.singleOrNull()
-                Json.stringify(if (result == null) QuitRet("设备ID错误!") else {
-                    if (Devices.deleteWhere { Devices.id.eq(id) } == 1) QuitRet(null, token)
-                    else QuitRet("Token错误")
-                })
-            }
-
+            val uuid = player.uniqueId.toString()
+            val user = db.getPlayer(uuid)
+            if (!user.devices.removeIf { it.id == token }) return Json.stringify(QuitRet("UUID 已过期!"))
+            db.savePlayer(uuid, user)
+            val map = db.getDeviceMap()
+            if (map.remove(token) != null) db.saveDeviceMap(map)
+            return Json.stringify(QuitRet(null, token))
         }
         "heartBeat" -> {
             return """{"type":"heartBeat"}"""

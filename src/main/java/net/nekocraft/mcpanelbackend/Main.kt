@@ -1,5 +1,6 @@
 package net.nekocraft.mcpanelbackend
 
+import cn.apisium.nekoessentials.Main
 import io.ktor.application.install
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.WebSocketSession
@@ -10,39 +11,52 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.stringify
 import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 import org.bukkit.plugin.java.JavaPlugin
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.transactions.transaction
-import java.io.File
+import org.bukkit.plugin.java.annotation.command.Command
+import org.bukkit.plugin.java.annotation.dependency.Dependency
+import org.bukkit.plugin.java.annotation.plugin.ApiVersion
+import org.bukkit.plugin.java.annotation.plugin.Description
+import org.bukkit.plugin.java.annotation.plugin.Plugin
+import org.bukkit.plugin.java.annotation.plugin.Website
+import org.bukkit.plugin.java.annotation.plugin.author.Author
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.TimeUnit
 
 internal val members = CopyOnWriteArrayList<WebSocketSession>()
 internal val loginedMembers = ConcurrentHashMap<WebSocketSession, OfflinePlayer>()
 internal var listData = ""
 
 @ImplicitReflectionSerializer
+@OptIn(UnstableDefault::class)
 private val errorMsg = Frame.Text(Json.stringify(Dialog("发生错误!")))
 
+@Plugin(name = "MCPanelBackend", version = "1.0")
+@Description("MC Panel.")
+@Author("Shirasawa")
+@Website("https://apisium.cn")
+@ApiVersion(ApiVersion.Target.v1_13)
+@Command(name = "panel")
+@Dependency("NekoEssentials")
 @Suppress("UNUSED")
 @kotlinx.coroutines.ObsoleteCoroutinesApi
 @ImplicitReflectionSerializer
 class Main: JavaPlugin() {
+    internal lateinit var instance: Main
     private lateinit var app: ApplicationEngine
+    @ExperimentalCoroutinesApi
+    @OptIn(UnstableDefault::class)
     override fun onEnable() {
         saveDefaultConfig()
-        Database.connect("jdbc:h2:${File(dataFolder, "db").absolutePath}", driver = "org.h2.Driver")
-        transaction { SchemaUtils.create(Users, Devices) }
         app = embeddedServer(Netty, config.getInt("port", 18124)) {
             install(WebSockets)
             routing {
@@ -53,7 +67,7 @@ class Main: JavaPlugin() {
                             if (it !is Frame.Text) return@consumeEach
                             try {
                                 val (type, data) = it.readText().split('|', limit = 2)
-                                outgoing.send(Frame.Text(ctrl(type, data, this) ?: return@consumeEach))
+                                outgoing.send(Frame.Text(ctrl(type, data, this, this@Main) ?: return@consumeEach))
                             } catch (ignored: Exception) {
                                 outgoing.send(errorMsg)
                             }
@@ -65,14 +79,13 @@ class Main: JavaPlugin() {
                     } finally {
                         members.remove(this)
                         loginedMembers.remove(this)
-                        try { close() } catch (ignored: Exception) { }
                     }
                 }
             }
         }
         app.start()
         val cmd = server.getPluginCommand("panel")!!
-        val cmdExec = Commands()
+        val cmdExec = Commands(this)
         cmd.setExecutor(cmdExec)
         cmd.tabCompleter = cmdExec
         server.pluginManager.registerEvents(Events(), this)
@@ -104,7 +117,7 @@ class Main: JavaPlugin() {
     }
 
     override fun onDisable() {
-        app.stop(0, 0, TimeUnit.SECONDS)
+        app.stop(0, 0)
         members.clear()
         loginedMembers.clear()
         loginRequests.clear()
