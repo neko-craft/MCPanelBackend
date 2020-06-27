@@ -1,9 +1,9 @@
 package net.nekocraft.mcpanelbackend
 
+import cn.apisium.nekoessentials.utils.DatabaseSingleton
 import cn.apisium.nekoessentials.utils.Serializer
 import kotlinx.serialization.*
 import kotlinx.serialization.json.Json
-import org.iq80.leveldb.DB
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -19,23 +19,23 @@ internal data class User(
 
 @ImplicitReflectionSerializer
 @OptIn(UnstableDefault::class)
-internal fun DB.getPlayer(id: String): User {
-    val bytes = this[("$id.mcPanel").toByteArray()]
+internal fun DatabaseSingleton.getPlayer(id: String): User {
+    val bytes = this["$id.mcPanel"]
     return if (bytes == null) User() else Json.parse(bytes.toString())
 }
 
 @ImplicitReflectionSerializer
 @OptIn(UnstableDefault::class)
-internal fun DB.savePlayer(id: String, user: User) {
-    this.put(("$id.mcPanel").toByteArray(), Json.stringify(user).toByteArray())
+internal fun DatabaseSingleton.savePlayer(id: String, user: User) {
+    this.set("$id.mcPanel", Json.stringify(user).toByteArray())
 }
 
-private val DEVICE_MAP = ("mcPanelDevices").toByteArray()
-internal fun DB.getDeviceMap(): HashMap<String, String> {
+private const val DEVICE_MAP = "mcPanelDevices"
+internal fun DatabaseSingleton.getDeviceMap(): HashMap<String, String> {
     val bytes = this[DEVICE_MAP]
     return if (bytes == null) HashMap() else Serializer.deserializeObject(bytes) as HashMap<String, String>
 }
 
-internal fun DB.saveDeviceMap(map: HashMap<String, String>) {
-    this.put(DEVICE_MAP, Serializer.serializeObject(map))
+internal fun DatabaseSingleton.saveDeviceMap(map: HashMap<String, String>) {
+    this.set(DEVICE_MAP, Serializer.serializeObject(map))
 }

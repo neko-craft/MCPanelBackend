@@ -27,3 +27,9 @@ hs_err_pid*
 /build
 /.gradle
 out
+
+/bin
+.project
+.classpath
+.vscode
+.settings

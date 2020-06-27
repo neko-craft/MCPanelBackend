@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal val members = CopyOnWriteArrayList<WebSocketSession>()
-internal val loginedMembers = ConcurrentHashMap<WebSocketSession, OfflinePlayer>()
+internal val loggedMembers = ConcurrentHashMap<WebSocketSession, OfflinePlayer>()
 internal var listData = ""
 
 @ImplicitReflectionSerializer
@@ -78,7 +78,7 @@ class Main: JavaPlugin() {
                         e.printStackTrace()
                     } finally {
                         members.remove(this)
-                        loginedMembers.remove(this)
+                        loggedMembers.remove(this)
                     }
                 }
             }
@@ -119,7 +119,7 @@ class Main: JavaPlugin() {
     override fun onDisable() {
         app.stop(0, 0)
         members.clear()
-        loginedMembers.clear()
+        loggedMembers.clear()
         loginRequests.clear()
     }
 }

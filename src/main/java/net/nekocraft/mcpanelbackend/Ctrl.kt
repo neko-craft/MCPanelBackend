@@ -86,12 +86,12 @@ suspend fun ctrl(type: String, d: String, client: WebSocketSession, main: Main):
             val id = db.getDeviceMap()[token] ?: return Json.stringify(TokenRet("UUID 已过期!"))
             db.getPlayer(id).devices.find { it.id == token } ?: return Json.stringify(TokenRet("UUID 已过期!"))
             val player = Bukkit.getOfflinePlayer(UUID.fromString(id))
-            loginedMembers[client] = player
+            loggedMembers[client] = player
             return Json.stringify(TokenRet(null, player.name, player.isBanned,
                     player.isWhitelisted, Bukkit.hasWhitelist()))
         }
         "chat" -> {
-            val user = loginedMembers[client] ?: return Json.stringify(Dialog("你还没有登录!"))
+            val user = loggedMembers[client] ?: return Json.stringify(Dialog("你还没有登录!"))
             val name = user.name ?: return null
             if (user.isBanned || (Bukkit.hasWhitelist() && !user.isWhitelisted))
                 return Json.stringify(Dialog("你没有发送聊天信息的权限!"))
@@ -102,7 +102,7 @@ suspend fun ctrl(type: String, d: String, client: WebSocketSession, main: Main):
         }
         "list" -> return listData
         "quit" -> {
-            val player = loginedMembers[client] ?: return Json.stringify(QuitRet("你还没有登录!"))
+            val player = loggedMembers[client] ?: return Json.stringify(QuitRet("你还没有登录!"))
             val token = Json.parse<QuitData>(d).token
             val uuid = player.uniqueId.toString()
             val user = db.getPlayer(uuid)
