@@ -50,10 +50,14 @@ kotlin {
     }
 }
 
+compileKotlin {
+    kotlinOptions.freeCompilerArgs += '-Xopt-in=kotlin.RequiresOptIn'
+}
+
 dependencies {
     compileOnly 'org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT'
     compileOnly 'com.destroystokyo.paper:paper-api:1.15.2-R0.1-SNAPSHOT'
-    compileOnly 'com.github.neko-craft:NekoEssentials:-SNAPSHOT'
+    compileOnly 'com.github.neko-craft:NekoEssentials:1f7561eb38'
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile 'org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.20.0'
     compile "io.ktor:ktor-websockets:$ktor_version"

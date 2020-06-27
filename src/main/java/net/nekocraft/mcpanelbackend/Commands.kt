@@ -1,6 +1,6 @@
 package net.nekocraft.mcpanelbackend
 
-import kotlinx.coroutines.ObsoleteCoroutinesApi
+import cn.apisium.nekoessentials.utils.DatabaseSingleton
 import kotlinx.serialization.ImplicitReflectionSerializer
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.chat.ClickEvent
@@ -11,15 +11,14 @@ import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 
-@ObsoleteCoroutinesApi
-@ImplicitReflectionSerializer
-class Commands constructor(instance: Main) : CommandExecutor, TabCompleter {
-    private val db = instance.instance.db
+class Commands: CommandExecutor, TabCompleter {
+    private val db = DatabaseSingleton.INSTANCE
     override fun onTabComplete(s: CommandSender, c: Command, l: String, a: Array<out String>): MutableList<String> {
         if (a.size == 1) return mutableListOf("devices")
         return mutableListOf()
     }
 
+    @ImplicitReflectionSerializer
     override fun onCommand(s: CommandSender, c: Command, l: String, a: Array<out String>): Boolean {
         if (a.isEmpty()) {
             s.sendMessage("§e[用户中心] §c指令错误!")

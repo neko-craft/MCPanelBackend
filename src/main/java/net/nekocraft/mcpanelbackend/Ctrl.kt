@@ -1,5 +1,6 @@
 package net.nekocraft.mcpanelbackend
 
+import cn.apisium.nekoessentials.utils.DatabaseSingleton
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.WebSocketSession
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -19,12 +20,12 @@ import java.util.*
 
 internal val loginRequests = WeakHashMap<Player, (Boolean) -> Unit>()
 
-@ObsoleteCoroutinesApi
 @OptIn(UnstableDefault::class)
+@ObsoleteCoroutinesApi
 @Suppress("BlockingMethodInNonBlockingContext")
 @ImplicitReflectionSerializer
-suspend fun ctrl(type: String, d: String, client: WebSocketSession, main: Main): String? {
-    val db = main.instance.db
+suspend fun ctrl(type: String, d: String, client: WebSocketSession): String? {
+    val db = DatabaseSingleton.INSTANCE
     when (type) {
         "login" -> {
             val data = Json.parse<LoginData>(d)
