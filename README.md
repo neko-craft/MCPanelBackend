@@ -4,7 +4,7 @@
 ## Build
 
 ```bash
-gradle shadowJar
+gradlew jar
 ```
 
 ## Config

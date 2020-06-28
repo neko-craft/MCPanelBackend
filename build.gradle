@@ -25,11 +25,8 @@ kotlin {
     }
 }
 
-group = pluginGroup
-version = pluginVersion
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+group = pluginGroup as Object
+version = pluginVersion as Object
 
 repositories {
     mavenCentral()
@@ -56,8 +53,8 @@ compileKotlin {
 
 dependencies {
     compileOnly 'org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT'
-    compileOnly 'com.destroystokyo.paper:paper-api:1.15.2-R0.1-SNAPSHOT'
-    compileOnly 'com.github.neko-craft:NekoEssentials:1f7561eb38'
+    compileOnly 'com.destroystokyo.paper:paper-api:1.16.1-R0.1-SNAPSHOT'
+    compileOnly 'com.github.neko-craft:NekoEssentials:04b78ee57e'
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile 'org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.20.0'
     compile "io.ktor:ktor-websockets:$ktor_version"
