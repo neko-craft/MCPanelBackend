@@ -22,13 +22,6 @@ import kotlinx.serialization.stringify
 import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 import org.bukkit.plugin.java.JavaPlugin
-import org.bukkit.plugin.java.annotation.command.Command
-import org.bukkit.plugin.java.annotation.dependency.Dependency
-import org.bukkit.plugin.java.annotation.plugin.ApiVersion
-import org.bukkit.plugin.java.annotation.plugin.Description
-import org.bukkit.plugin.java.annotation.plugin.Plugin
-import org.bukkit.plugin.java.annotation.plugin.Website
-import org.bukkit.plugin.java.annotation.plugin.author.Author
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -40,13 +33,6 @@ internal var listData = ""
 @OptIn(UnstableDefault::class)
 private val errorMsg = Frame.Text(Json.stringify(Dialog("发生错误!")))
 
-@Plugin(name = "MCPanelBackend", version = "1.0")
-@Description("MC Panel.")
-@Author("Shirasawa")
-@Website("https://apisium.cn")
-@ApiVersion(ApiVersion.Target.v1_13)
-@Command(name = "panel")
-@Dependency("NekoEssentials")
 @Suppress("UNUSED")
 @kotlinx.coroutines.ObsoleteCoroutinesApi
 @ImplicitReflectionSerializer
@@ -67,7 +53,7 @@ class Main: JavaPlugin() {
                             if (it !is Frame.Text) return@consumeEach
                             try {
                                 val (type, data) = it.readText().split('|', limit = 2)
-                                outgoing.send(Frame.Text(ctrl(type, data, this, this@Main) ?: return@consumeEach))
+                                outgoing.send(Frame.Text(ctrl(type, data, this) ?: return@consumeEach))
                             } catch (ignored: Exception) {
                                 outgoing.send(errorMsg)
                             }
@@ -85,7 +71,7 @@ class Main: JavaPlugin() {
         }
         app.start()
         val cmd = server.getPluginCommand("panel")!!
-        val cmdExec = Commands(this)
+        val cmdExec = Commands()
         cmd.setExecutor(cmdExec)
         cmd.tabCompleter = cmdExec
         server.pluginManager.registerEvents(Events(), this)

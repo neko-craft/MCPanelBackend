@@ -31,6 +31,7 @@ internal fun DatabaseSingleton.savePlayer(id: String, user: User) {
 }
 
 private const val DEVICE_MAP = "mcPanelDevices"
+@Suppress("UNCHECKED_CAST")
 internal fun DatabaseSingleton.getDeviceMap(): HashMap<String, String> {
     val bytes = this[DEVICE_MAP]
     return if (bytes == null) HashMap() else Serializer.deserializeObject(bytes) as HashMap<String, String>

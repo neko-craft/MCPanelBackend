@@ -1,0 +1,12 @@
+name: MCPanelBackend
+version: 1.0
+description: MC panel
+author: Shirasawa
+website: https://apisium.cn
+commands:
+  panel:
+    permission: neko.panel
+permissions:
+  neko.panel:
+    default: 'true'
+api-version: '1.13'
