@@ -9,11 +9,12 @@ import io.ktor.routing.routing
 import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.util.InternalAPI
+import io.ktor.util.collections.ConcurrentSet
 import io.ktor.websocket.WebSockets
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.channels.ClosedSendChannelException
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.UnstableDefault
@@ -23,9 +24,9 @@ import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 
-internal val members = CopyOnWriteArrayList<WebSocketSession>()
+@InternalAPI
+internal val members = ConcurrentSet<WebSocketSession>()
 internal val loggedMembers = ConcurrentHashMap<WebSocketSession, OfflinePlayer>()
 internal var listData = ""
 
@@ -39,6 +40,8 @@ private val errorMsg = Frame.Text(Json.stringify(Dialog("发生错误!")))
 class Main: JavaPlugin() {
     internal lateinit var instance: Main
     private lateinit var app: ApplicationEngine
+    @InternalAPI
+    @InternalCoroutinesApi
     @ExperimentalCoroutinesApi
     @OptIn(UnstableDefault::class)
     override fun onEnable() {
@@ -50,6 +53,7 @@ class Main: JavaPlugin() {
                     members.add(this)
                     try {
                         incoming.consumeEach {
+//                            Thread.UncaughtExceptionHandler { _, _ -> }
                             if (it !is Frame.Text) return@consumeEach
                             try {
                                 val (type, data) = it.readText().split('|', limit = 2)
@@ -59,8 +63,6 @@ class Main: JavaPlugin() {
                                 outgoing.send(errorMsg)
                             }
                         }
-                    } catch (ignored: ClosedReceiveChannelException) {
-                    } catch (ignored: ClosedSendChannelException) {
                     } catch (e: Exception) {
                         e.printStackTrace()
                     } finally {
@@ -78,7 +80,7 @@ class Main: JavaPlugin() {
         server.pluginManager.registerEvents(Events(), this)
         server.scheduler.runTaskTimerAsynchronously(this, ::task, 0, 5 * 20)
         server.scheduler.runTaskTimerAsynchronously(this, fun () {
-            if (members.size == 0) return
+            if (members.isEmpty()) return
             val set = HashSet<String>()
             listData = Json.stringify(
                     ListRet(
@@ -103,6 +105,7 @@ class Main: JavaPlugin() {
         }, 0, 5 * 60 * 20)
     }
 
+    @InternalAPI
     override fun onDisable() {
         app.stop(0, 0)
         members.clear()

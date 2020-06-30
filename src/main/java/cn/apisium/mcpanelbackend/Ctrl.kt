@@ -3,6 +3,7 @@ package cn.apisium.mcpanelbackend
 import cn.apisium.nekoessentials.utils.DatabaseSingleton
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.WebSocketSession
+import io.ktor.util.InternalAPI
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -20,6 +21,7 @@ import java.util.*
 
 internal val loginRequests = WeakHashMap<Player, (Boolean) -> Unit>()
 
+@InternalAPI
 @OptIn(UnstableDefault::class)
 @ObsoleteCoroutinesApi
 @Suppress("BlockingMethodInNonBlockingContext")

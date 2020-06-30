@@ -1,6 +1,7 @@
 package cn.apisium.mcpanelbackend
 
 import io.ktor.http.cio.websocket.Frame
+import io.ktor.util.InternalAPI
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ImplicitReflectionSerializer
@@ -14,6 +15,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 
+@InternalAPI
 @ImplicitReflectionSerializer
 @OptIn(UnstableDefault::class)
 class Events: Listener {
