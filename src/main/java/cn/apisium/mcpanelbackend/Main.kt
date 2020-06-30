@@ -1,4 +1,4 @@
-package net.nekocraft.mcpanelbackend
+package cn.apisium.mcpanelbackend
 
 import cn.apisium.nekoessentials.Main
 import io.ktor.application.install
@@ -53,7 +53,8 @@ class Main: JavaPlugin() {
                             if (it !is Frame.Text) return@consumeEach
                             try {
                                 val (type, data) = it.readText().split('|', limit = 2)
-                                outgoing.send(Frame.Text(ctrl(type, data, this) ?: return@consumeEach))
+                                outgoing.send(Frame.Text(ctrl(type, data, this)
+                                        ?: return@consumeEach))
                             } catch (ignored: Exception) {
                                 outgoing.send(errorMsg)
                             }

@@ -1,4 +1,4 @@
-package net.nekocraft.mcpanelbackend
+package cn.apisium.mcpanelbackend
 
 import kotlinx.serialization.Serializable
 

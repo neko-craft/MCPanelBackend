@@ -1,8 +1,11 @@
 name: MCPanelBackend
+main: cn.apisium.mcpanelbackend.Main
 version: 1.0
 description: MC panel
 author: Shirasawa
 website: https://apisium.cn
+depend:
+  - NekoEssentials
 commands:
   panel:
     permission: neko.panel

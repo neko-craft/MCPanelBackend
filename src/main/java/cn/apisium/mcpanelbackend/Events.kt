@@ -1,4 +1,4 @@
-package net.nekocraft.mcpanelbackend
+package cn.apisium.mcpanelbackend
 
 import io.ktor.http.cio.websocket.Frame
 import kotlinx.coroutines.launch

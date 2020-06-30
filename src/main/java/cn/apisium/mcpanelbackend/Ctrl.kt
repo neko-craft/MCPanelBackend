@@ -1,4 +1,4 @@
-package net.nekocraft.mcpanelbackend
+package cn.apisium.mcpanelbackend
 
 import cn.apisium.nekoessentials.utils.DatabaseSingleton
 import io.ktor.http.cio.websocket.Frame
